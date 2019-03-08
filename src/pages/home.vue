@@ -5,7 +5,7 @@
        <span class="title">分类管理</span>
        <el-button class="addCategory" type="primary" @click="displayCreateBox">添加分类</el-button>
        <div class="categoryInfo">
-         <el-table  :data="infoList"  border  style="width: 80%">
+         <el-table :data="infoList"  border  style="width: 80%">
               <el-table-column  prop="id"  label="ID"  width="60">
               </el-table-column>
               <el-table-column  prop="categoryName" label="分类名称" width="300">
@@ -52,15 +52,7 @@ export default {
   name: 'HelloWorld',
   data () {
     return {
-      infoList: [
-        {
-          id: '1',
-          categoryName: '平板电视'
-        }, {
-          id: '2',
-          categoryName: '马桶'
-        }
-      ],
+      infoList: [],
       dialogFormVisible: false,
       formLabelWidth: '80px',
       form: {
@@ -124,10 +116,17 @@ export default {
     submit () {
       this.$refs.form.validate((valid) => {
         if (valid) {
-          this.dialogFormVisible = false
-          this.$message({
-            type: 'success',
-            message: '添加成功'
+          this.$axios.post('http://localhost:8080/category/add',{'name': this.form.categoryName}).then((res) => {
+            console.log(res)
+            if (res.data.data.code === 200) {
+              this.dialogFormVisible = false
+              this.$message({
+                type: 'success',
+                message: '添加成功'
+              })
+            }
+          }).catch((err) => {
+            console.log(err)
           })
         } else {
           console.log('error submit!!');
@@ -135,6 +134,24 @@ export default {
         }
       })
     }
+  },
+  created () {
+    this.$axios({
+      methods: 'get',
+      url: 'http://localhost:8080/category/list'
+    }).then((res) => {
+      console.log(res)
+      for (var i = 0; i < res.data.data.length; i++) {
+        var obj = {
+          id: res.data.data[i].id,
+          categoryName: res.data.data[i].name
+        }
+        this.infoList.push(obj)
+      }
+    }).catch((err) => {
+      console.log(err)
+    })
+  
   }
 }
 </script>
