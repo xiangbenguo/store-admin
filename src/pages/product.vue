@@ -48,7 +48,7 @@
                         </el-form-item>
                     </el-form>
                     <div slot="footer" class="dialog-footer">
-                        <el-button type="primary" @click="submit">提 交</el-button>
+                        <el-button type="primary" @click="addSubmit">提 交</el-button>
                     </div>
                 </el-dialog>
                 <el-dialog title="属性设置" :visible.sync="propertySettingDialog" width="800px">
@@ -74,7 +74,7 @@
                         </el-form-item>
                     </el-form>
                     <div slot="footer" class="dialog-footer">
-                        <el-button type="primary" @click="submit">提 交</el-button>
+                        <el-button type="primary" @click="editSubmit">提 交</el-button>
                     </div>
                 </el-dialog>
             </div>
@@ -87,32 +87,12 @@ import Header from '../components/web-header'
 export default {
   data () {
     return {
-      infoList: [
-        {
-          id: '1',
-          productName: '夏普屏PANDA/熊猫 LE39D71S 39英寸智能WiFi液晶平板电视40 42 43',
-          price: '2499',
-          storeNum: '75'
-        }, {
-          id: '2',
-          productName: 'Changhong/长虹 65S1安卓智能12核65英寸网络平板LED液晶电视机70',
-          price: '4499',
-          storeNum: '84'
-        }, {
-          id: '3',
-          productName: 'Hisense/海信 LED40EC520UA 40英寸4K智能平板液晶电视机WIFI网络',
-          price: '2399',
-          storeNum: '82'
-        }, {
-          id: '4',
-          productName: 'Hisense/海信 LED49EC320A 49吋led液晶电视机智能网络平板电视50',
-          price: '2799',
-          storeNum: '90'
-        }
-      ],
+      infoList: [],
       propertyForm: {
-        propertyNameList: ['操作系统','3D类型','能效等级','产品名称','网络连接方式','制造商名称','型号','分辨率','制造商名称','型号','分辨率','制造商名称','型号','分辨率'],
-        propertyValueList: ['VIDAA','无','一级','Hisense/海信 LED60EC660...','全部支持','青岛海信电器股份有限公司','LED60EC660US','3840x2160','青岛海信电器股份有限公司','LED60EC660US','3840x2160','青岛海信电器股份有限公司','LED60EC660US','3840x2160']
+        pid: '',
+        ptid: [],
+        propertyNameList: [],
+        propertyValueList: []
       },
       dialogFormVisible: false,
       propertySettingDialog: false,
@@ -124,6 +104,7 @@ export default {
         storeNum: ''
       },
       editForm: {
+        id: '',
         productName: '',
         price: '',
         storeNum: ''
@@ -139,28 +120,41 @@ export default {
       this.$router.push({path:'/picture', query: {pid: value.id, productName: value.productName}})
     },
     settingClick (value) {
+      console.log(value)
+      this.propertyForm= {
+        pid: value.id,
+        ptid: [],
+        propertyNameList: [],
+        propertyValueList: []
+      }
       this.propertySettingDialog = true
+      this.$axios.get(`${this.$restUrl}/property/getCidList?cid=${this.$route.query.cid}`).then((res) => {
+        console.log(res)
+        if (res.data.code === 200) {
+          for (var i = 0; i < res.data.data.length; i++) {
+            this.propertyForm.ptid.push(res.data.data[i].id)
+            this.propertyForm.propertyNameList.push(res.data.data[i].name)
+          }
+        }
+      }).catch((err) => {
+        console.log(err)
+      })
+      this.$axios.get(`${this.$restUrl}/propertyValue/getPidValueList?pid=${value.id}`).then((res) => {
+        console.log(res)
+        if (res.data.code === 200) {
+          for (var i = 0; i < res.data.data.length; i++) {
+            this.propertyForm.propertyValueList.push(res.data.data[i].value)
+          }
+        }
+      }).catch((err) => {
+        console.log(err)
+      })
+      console.log(this.propertyForm)
     },
     editClick (value) {
       console.log(value)
-      // this.$prompt('产品名称', '编辑产品', {
-      //   confirmButtonText: '确定',
-      //   cancelButtonText: '取消',
-      //   inputPattern:  /\S/,
-      //   inputErrorMessage: '请输入属性名称'
-      // }).then(({ value }) => {
-      //   this.$message({
-      //     type: 'success',
-      //     message: '编辑成功' 
-      //   })
-      //   console.log(value)
-      // }).catch(() => {
-      //   this.$message({
-      //     type: 'info',
-      //     message: '取消编辑'
-      //   })
-      // })
       this.editForm = {
+        id: value.id,
         productName: value.productName,
         price: parseInt(value.price),
         storeNum: parseInt(value.storeNum)
@@ -174,10 +168,18 @@ export default {
         cancelButtonText: '取消',
         type: 'warning'
       }).then(() => {
-        this.$message({
-          type: 'success',
-          message: '成功删除!'
-        });
+        this.$axios.post('http://localhost:8080/product/delete',{'id':value.id}).then((res) => {
+          console.log(res)
+          if (res.data.code === 200) {
+            this.$message({
+              type: 'success',
+              message: '成功删除!'
+            })
+            this.getList()
+          }
+        }).catch((err) => {
+          console.log(err)
+        })
       }).catch(() => {
         this.$message({
           type: 'info',
@@ -188,13 +190,57 @@ export default {
     displayCreateBox () {
       this.dialogFormVisible = true
     },
-    submit () {
+    addSubmit () {
       this.$refs.form.validate((valid) => {
         if (valid) {
-          this.dialogFormVisible = false
-          this.$message({
-            type: 'success',
-            message: '添加成功'
+          const data = {
+            name: this.form.productName,
+            price: this.form.price,
+            stock: this.form.storeNum,
+            cid: this.$route.query.cid
+          }
+          this.$axios.post(`${this.$restUrl}/product/add`, data).then((res) => {
+            console.log(res)
+            if (res.data.code === 200) {
+              this.dialogFormVisible = false
+              this.$message({
+                type: 'success',
+                message: '添加成功'
+              })
+              this.getList()
+              this.$refs.form.resetFields()//清除表单验证成功的样式
+            }
+          }).catch((err) => {
+            console.log(err)
+          })
+        } else {
+          console.log('error submit!!');
+          return false;
+        }
+      })
+    },
+    editSubmit () {
+      this.$refs.form.validate((valid) => {
+        if (valid) {
+          const data = {
+            id: this.editForm.id,
+            name: this.editForm.productName,
+            price: this.editForm.price,
+            stock: this.editForm.storeNum,
+          }
+          this.$axios.post(`${this.$restUrl}/product/update`, data).then((res) => {
+            console.log(res)
+            if (res.data.code === 200) {
+              this.editProductInfo = false
+              this.$message({
+                type: 'success',
+                message: '编辑成功'
+              })
+              this.getList()
+              this.$refs.form.resetFields()//清除表单验证成功的样式
+            }
+          }).catch((err) => {
+            console.log(err)
           })
         } else {
           console.log('error submit!!');
@@ -204,11 +250,52 @@ export default {
     },
     propertySetting () {
       console.log(this.propertyForm)
+      this.deletePidList()
+      for (var i = 0; i < this.propertyForm.propertyNameList.length; i++) {
+         
+        this.$axios.post(`${this.$restUrl}/propertyValue/add`,{
+          value: this.propertyForm.propertyValueList[i],
+          pid: this.propertyForm.pid,
+          ptid: this.propertyForm.ptid[i]
+        }).then((res) => {
+          console.log(res)
+        }).catch((err) => {
+          console.log(err)
+        })
+      }
       this.propertySettingDialog = false
+      
+    },
+    getList () {
+      this.infoList = []
+      this.$axios.get(`${this.$restUrl}/product/getCidList?cid=${this.$route.query.cid}`).then((res) => {
+        console.log(res)
+        if (res.data.code === 200) {
+          for (var i = 0; i < res.data.data.length; i++) {
+            var obj = {
+              id: res.data.data[i].id,
+              productName: res.data.data[i].name,
+              price: res.data.data[i].price,
+              storeNum: res.data.data[i].stock,
+            }
+            this.infoList.push(obj)
+          }
+        }
+      }).catch((err) => {
+        console.log(err)
+      })
+    },
+    deletePidList () {
+      this.$axios.post(`${this.$restUrl}/propertyValue/deletePidList`, {'pid': this.propertyForm.pid}).then((res) => {
+        console.log(res)
+      }).catch((err) => {
+        console.log(err)
+      })
     }
   },
   created () {
     console.log(this.$route.query.cid)
+    this.getList()
   }
 }
 </script>

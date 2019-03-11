@@ -140,7 +140,6 @@ export default {
                 message: '添加成功'
               })
               this.getList()
-              this.form.categoryName = ''
               this.$refs.form.resetFields()//清除表单验证成功的样式
             }
           }).catch((err) => {

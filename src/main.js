@@ -12,6 +12,7 @@ import router from './router'
 Vue.config.productionTip = false
 Vue.prototype.qs = qs
 Vue.prototype.$axios = axios
+Vue.prototype.$restUrl = 'http://localhost:8080'
 Vue.use(ElementUI)
 
 router.afterEach((to, from, next) => {

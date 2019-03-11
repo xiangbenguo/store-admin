@@ -121,7 +121,6 @@ export default {
                 message: '添加成功'
               })
               this.getList()
-              this.form.propertyName = ''
               this.$refs.form.resetFields()//清除表单验证成功的样式
             }
           })
@@ -135,7 +134,7 @@ export default {
       this.infoList = []
       this.$axios({
         methods: 'get',
-        url: `http://localhost:8080/property/getCidList?cid=${this.$route.query.cid}`
+        url: `${this.$restUrl}/property/getCidList?cid=${this.$route.query.cid}`
       }).then((res) => {
         console.log(res)
         if (res.data.code === 200) {

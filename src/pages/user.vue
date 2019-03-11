@@ -43,7 +43,7 @@ export default {
                 id: res.data.data[i].id,
                 userName: res.data.data[i].username,
                 passWord: res.data.data[i].password,
-                registeredTime: res.data.data[i].createtime
+                registeredTime: res.data.data[i].createtime.replace('.000+0000','')
               }
               this.infoList.push(obj)
             }
