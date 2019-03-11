@@ -25,25 +25,32 @@ export default {
   name: 'HelloWorld',
   data () {
     return {
-      infoList: [
-        {
-          id: '1',
-          userName: '15208327082',
-          passWord: '123456',
-          registeredTime: '2019-2-25'
-        }, {
-          id: '2',
-          userName: '15208327082',
-          passWord: '123456',
-          registeredTime: '2019-2-25'
-        }
-      ]
+      infoList: []
     }
   },
   components: {
     'web-header': Header
   },
   methods: {
+  },
+  created () {
+    this.infoList=[]
+    this.$axios.get('http://localhost:8080/user/list').then((res) => {
+          console.log(res)
+          if (res.data.code === 200) {
+            for (var i = 0; i < res.data.data.length; i++) {
+              var obj = {
+                id: res.data.data[i].id,
+                userName: res.data.data[i].username,
+                passWord: res.data.data[i].password,
+                registeredTime: res.data.data[i].createtime
+              }
+              this.infoList.push(obj)
+            }
+          }
+        }).catch((err) => {
+          console.log(err)
+        })
   }
 }
 </script>

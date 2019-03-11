@@ -41,27 +41,7 @@ import Header from '../components/web-header'
 export default {
   data () {
     return {
-      infoList: [
-        {
-          id: '1',
-          propertyName: '操作系统'
-        }, {
-          id: '2',
-          propertyName: '3D类型'
-        }, {
-          id: '3',
-          propertyName: '能效等级'
-        }, {
-          id: '4',
-          propertyName: '产品名称'
-        }, {
-          id: '5',
-          propertyName: '网络连接方式'
-        }, {
-          id: '6',
-          propertyName: '制造商名称'
-        }
-      ],
+      infoList: [],
       dialogFormVisible: false,
       formLabelWidth: '80px',
       form: {
@@ -73,19 +53,26 @@ export default {
     'web-header': Header
   },
   methods : {
-    editClick (value) {
-      console.log(value)
+    editClick (rowData) {
+      console.log(rowData)
       this.$prompt('属性名称', '编辑属性', {
         confirmButtonText: '确定',
         cancelButtonText: '取消',
         inputPattern:  /\S/,
         inputErrorMessage: '请输入属性名称'
       }).then(({ value }) => {
-        this.$message({
-          type: 'success',
-          message: '编辑成功' 
+        this.$axios.post('http://localhost:8080/property/update',{'id':rowData.id,'name':value}).then((res) => {
+          console.log(res)
+          if (res.data.code === 200) {
+            this.getList()
+            this.$message({
+              type: 'success',
+              message: '编辑成功' 
+            })
+          }
+        }).catch((err) => {
+          console.log(err)
         })
-        console.log(value)
       }).catch(() => {
         this.$message({
           type: 'info',
@@ -100,10 +87,18 @@ export default {
         cancelButtonText: '取消',
         type: 'warning'
       }).then(() => {
-        this.$message({
-          type: 'success',
-          message: '成功删除!'
-        });
+        this.$axios.post('http://localhost:8080/property/delete',{'id':value.id}).then((res) => {
+          console.log(res)
+          if (res.data.code === 200) {
+            this.$message({
+              type: 'success',
+              message: '成功删除!'
+            })
+            this.getList()
+          }
+        }).catch((err) => {
+          console.log(err)
+        })
       }).catch(() => {
         this.$message({
           type: 'info',
@@ -117,20 +112,49 @@ export default {
     submit () {
       this.$refs.form.validate((valid) => {
         if (valid) {
-          this.dialogFormVisible = false
-          this.$message({
-            type: 'success',
-            message: '添加成功'
+          this.$axios.post('http://localhost:8080/property/add',{'cid':this.$route.query.cid,'name':this.form.propertyName}).then((res) => {
+            console.log(res)
+            if (res.data.code === 200) {
+              this.dialogFormVisible = false
+              this.$message({
+                type: 'success',
+                message: '添加成功'
+              })
+              this.getList()
+              this.form.propertyName = ''
+              this.$refs.form.resetFields()//清除表单验证成功的样式
+            }
           })
         } else {
           console.log('error submit!!');
           return false;
         }
       })
+    },
+    getList () {
+      this.infoList = []
+      this.$axios({
+        methods: 'get',
+        url: `http://localhost:8080/property/getCidList?cid=${this.$route.query.cid}`
+      }).then((res) => {
+        console.log(res)
+        if (res.data.code === 200) {
+          for (var i = 0; i < res.data.data.length; i++) {
+            var obj = {
+              id: res.data.data[i].id,
+              propertyName: res.data.data[i].name
+            }
+            this.infoList.push(obj)
+          }
+        }
+      }).catch((err) => {
+        console.log(err)
+      })
     }
   },
   created () {
     console.log(this.$route.query.cid)
+    this.getList()
   }
 }
 </script>

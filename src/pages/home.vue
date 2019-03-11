@@ -72,19 +72,26 @@ export default {
       console.log(value)
       this.$router.push({path:'/product', query: {cid: value.id, categoryName: value.categoryName}})
     },
-    editClick (value) {
-      console.log(value)
+    editClick (rowData) {
+      console.log(rowData)
       this.$prompt('分类名称', '编辑分类', {
         confirmButtonText: '确定',
         cancelButtonText: '取消',
         inputPattern:  /\S/,
         inputErrorMessage: '请输入分类名称'
       }).then(({ value }) => {
-        this.$message({
-          type: 'success',
-          message: '编辑成功' 
+        this.$axios.post('http://localhost:8080/category/update',{'id':rowData.id,'name': value}).then((res) => {
+          console.log(res)
+          if (res.data.code === 200) {
+            this.$message({
+              type: 'success',
+              message: '编辑成功' 
+            })
+            this.getList()
+          }
+        }).catch((err) => {
+          console.log(err)
         })
-        console.log(value)
       }).catch(() => {
         this.$message({
           type: 'info',
@@ -99,10 +106,18 @@ export default {
         cancelButtonText: '取消',
         type: 'warning'
       }).then(() => {
-        this.$message({
-          type: 'success',
-          message: '成功删除!'
-        });
+        this.$axios.post('http://localhost:8080/category/delete',{'id':value.id}).then((res) => {
+          console.log(res)
+          if (res.data.code === 200) {
+            this.$message({
+              type: 'success',
+              message: '成功删除!'
+            })
+            this.getList()
+          }
+        }).catch((err) => {
+          console.log(err)
+        })
       }).catch(() => {
         this.$message({
           type: 'info',
@@ -118,12 +133,15 @@ export default {
         if (valid) {
           this.$axios.post('http://localhost:8080/category/add',{'name': this.form.categoryName}).then((res) => {
             console.log(res)
-            if (res.data.data.code === 200) {
+            if (res.data.code === 200) {
               this.dialogFormVisible = false
               this.$message({
                 type: 'success',
                 message: '添加成功'
               })
+              this.getList()
+              this.form.categoryName = ''
+              this.$refs.form.resetFields()//清除表单验证成功的样式
             }
           }).catch((err) => {
             console.log(err)
@@ -133,25 +151,30 @@ export default {
           return false;
         }
       })
+    },
+    getList () {
+      this.infoList = []
+      this.$axios({
+        methods: 'get',
+        url: 'http://localhost:8080/category/list'
+      }).then((res) => {
+        console.log(res)
+        if (res.data.code === 200) {
+          for (var i = 0; i < res.data.data.length; i++) {
+            var obj = {
+              id: res.data.data[i].id,
+              categoryName: res.data.data[i].name
+            }
+            this.infoList.push(obj)
+          }
+        }
+      }).catch((err) => {
+        console.log(err)
+      })
     }
   },
   created () {
-    this.$axios({
-      methods: 'get',
-      url: 'http://localhost:8080/category/list'
-    }).then((res) => {
-      console.log(res)
-      for (var i = 0; i < res.data.data.length; i++) {
-        var obj = {
-          id: res.data.data[i].id,
-          categoryName: res.data.data[i].name
-        }
-        this.infoList.push(obj)
-      }
-    }).catch((err) => {
-      console.log(err)
-    })
-  
+    this.getList()
   }
 }
 </script>
