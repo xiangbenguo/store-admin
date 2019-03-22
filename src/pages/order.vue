@@ -95,6 +95,7 @@ export default {
           this.infoList.push(obj)
           this.getProductInfo(res.data.data[i].pid, i)
         }
+        this.changeStatus()
         console.log(this.infoList)
       }).catch((err) => {
         console.log(err)
@@ -110,6 +111,27 @@ export default {
       }).catch((err) => {
         console.log(err)
       })
+    },
+    changeStatus () {
+      for (var i = 0; i < this.infoList.length; i++) {
+        switch (this.infoList[i].status) {
+          case 1:
+          this.infoList[i].status = '待支付'
+          break
+          case 2:
+          this.infoList[i].status = '待发货'
+          break
+          case 3:
+          this.infoList[i].status = '待收货'
+          break
+          case 4:
+          this.infoList[i].status = '待评价'
+          break
+          case 5:
+          this.infoList[i].status = '已完成'
+          break
+        }
+      }
     }
   },
   created () {
