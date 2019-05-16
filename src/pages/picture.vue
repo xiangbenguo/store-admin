@@ -8,7 +8,7 @@
                   <el-table  :data="singleImgList"  border  style="width: 100%">
                       <el-table-column  prop="id"  label="ID"  width="60">
                       </el-table-column>
-                      <el-table-column  prop="singleImgSrc" label="产品单个图片" width="300">
+                      <el-table-column  prop="singleImgSrc" label="单个图片" width="300">
                           <template slot-scope="scope">
                               <img :src="require(`E://upload/${scope.row.url}`)" alt="" class="singleImg">
                           </template>
@@ -36,7 +36,7 @@
                   <el-table  :data="detailImgList"  border  style="width: 100%">
                       <el-table-column  prop="id"  label="ID"  width="60">
                       </el-table-column>
-                      <el-table-column  prop="detailImgSrc" label="产品详情图片" width="300">
+                      <el-table-column  prop="detailImgSrc" label="详情图片" width="300">
                           <template slot-scope="scope">
                               <img :src="require(`E://upload/${scope.row.url}`)" alt="" class="singleImg">
                           </template>
